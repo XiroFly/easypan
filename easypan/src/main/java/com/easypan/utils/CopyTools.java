@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 /**
  * 利用spring提供的BeenUtils工具类实现集合元素映射以及单个对象映射
  */
-public class CopyTools {
+public class   CopyTools {
     public static <T, S> List<T> copyList(List<S> list, Class<T> clazz) {
         return list.stream().map(s -> {
             T t = null;

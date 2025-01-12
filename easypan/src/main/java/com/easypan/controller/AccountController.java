@@ -96,7 +96,7 @@ public class AccountController extends BaseController {
             emailCodeService.sendEmailCode(email, type);
             return getSuccessResponseVO(null);
         } finally {
-            // 删除session中保存的邮箱验证码 重置
+            // 删除session中保存的验证码 重置
             session.removeAttribute(Constants.CHECK_CODE_KEY_EMAIL);
         }
     }
@@ -251,11 +251,6 @@ public class AccountController extends BaseController {
         } catch (Exception e) {
             log.error("上传头像失败", e);
         }
-
-        // 同时将数据库中qq头像设为空,本地设置头像
-        UserInfo userInfo = new UserInfo();
-        userInfo.setQqAvatar("");
-        userInfoService.updateUserInfoByUserId(userInfo, webUserDto.getUserId());
         webUserDto.setAvatar(null);
         //更新session
         session.setAttribute(Constants.SESSION_KEY, webUserDto);

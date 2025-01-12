@@ -126,13 +126,13 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Override
     @Transactional
     public void resetPwd(String email, String password, String emailCode) {
-        // 判断邮箱账号是否存在
-        UserInfo userInfo = userInfoMapper.selectByEmail(email);
-        if (userInfo == null) {
-            throw new BusinessException("邮箱账号不存在");
-        }
+            // 判断邮箱账号是否存在
+            UserInfo userInfo = userInfoMapper.selectByEmail(email);
+            if (userInfo == null) {
+                throw new BusinessException("邮箱账号不存在");
+            }
 
-        // 判断邮箱验证码是否正确，否则抛异常
+                // 判断邮箱验证码是否正确，否则抛异常
         emailCodeService.checkCode(email, emailCode);
 
         // 邮箱验证码正确可重置密码

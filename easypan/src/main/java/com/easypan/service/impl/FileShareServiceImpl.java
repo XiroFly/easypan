@@ -143,6 +143,7 @@ public class FileShareServiceImpl implements FileShareService {
             share.setCode(StringTools.getRandomString(Constants.LENGTH_5));
         }
         share.setShareId(StringTools.getRandomString(Constants.LENGTH_20));
+
         this.fileShareMapper.insert(share);
     }
 

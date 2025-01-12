@@ -98,7 +98,7 @@ public class FileInfoServiceImpl implements FileInfoService {
     public List<FileInfo> findListByParam(FileInfoQuery param) {
         return fileInfoMapper.selectList(param);
     }
-
+//组装query查数据库
     @Override
     public List<FileInfo> loadAllFolder(String userId, String filePid, String currentFileIds) {
         FileInfoQuery query = new FileInfoQuery();
@@ -111,7 +111,6 @@ public class FileInfoServiceImpl implements FileInfoService {
         query.setDelFlag(FileDelFlagEnums.USING.getFlag());
         query.setOrderBy("create_time desc");
         return fileInfoService.findListByParam(query);
-
     }
 
     // 移动文件到指定文件夹
@@ -132,7 +131,7 @@ public class FileInfoServiceImpl implements FileInfoService {
         // fileIds -> {fileId1,fileId2,fileId3...}
         String[] fileIdArray = fileIds.split(",");
 
-        // 如果移动到的目录正常，查询出toFile下的所有文件
+        // 如果移动到的目录正常，查询出toFile下的所有文件，和要移入的文件比对看是否重名
         FileInfoQuery query = new FileInfoQuery();
         query.setFilePid(filePid);
         query.setUserId(userId);
@@ -150,7 +149,7 @@ public class FileInfoServiceImpl implements FileInfoService {
         query.setFileIdArray(fileIdArray);
         List<FileInfo> selectFileList = findListByParam(query);
 
-        //如果存在名字相同，则将所选文件重命名
+            //如果存在名字相同，则将所选文件重命名
         for (FileInfo item : selectFileList) {
             FileInfo rootFileInfo = dbFileNameMap.get(item.getFileName());
             FileInfo updateInfo = new FileInfo();
@@ -225,7 +224,7 @@ public class FileInfoServiceImpl implements FileInfoService {
                 .filter(fileInfo ->
                         fileInfo.getFolderType().equals(FileFolderTypeEnums.FOLDER.getType()))
                 .forEach(fileInfo ->
-                        findAllSubFolderFileIdList(delFileSubFolderFileIdList, userId,
+                            findAllSubFolderFileIdList(delFileSubFolderFileIdList, userId,
                                 fileInfo.getFileId(), FileDelFlagEnums.USING.getFlag()));
 
         // 查询所有跟目录的文件准备判断是否需要重命名
@@ -308,6 +307,14 @@ public class FileInfoServiceImpl implements FileInfoService {
 
     }
 
+    /**
+     *
+     * @param shareRootFilePid
+     * @param shareFileIds
+     * @param myFolderId
+     * @param shareUserId
+     * @param currentUserId
+     */
     @Override
     public void saveShare(String shareRootFilePid, String shareFileIds, String myFolderId,
                           String shareUserId, String currentUserId) {
@@ -326,10 +333,10 @@ public class FileInfoServiceImpl implements FileInfoService {
         fileInfoQuery = new FileInfoQuery();
         fileInfoQuery.setUserId(shareUserId);
         fileInfoQuery.setFileIdArray(shareFileIdArray);
-        // 选中的所有文件
+        // 选中的所有文件, shareFileIdArray->shareFileList
         List<FileInfo> shareFileList = this.fileInfoMapper.selectList(fileInfoQuery);
 
-        //重命名选择的文件
+        //重命名选择的文件和文件夹
         List<FileInfo> copyFileList = new ArrayList<>();
         Date curDate = new Date();
         for (FileInfo item : shareFileList) {
@@ -348,7 +355,7 @@ public class FileInfoServiceImpl implements FileInfoService {
     public void deleteFileByUserId(String userId) {
         this.fileInfoMapper.deleteFileByUserId(userId);
     }
-
+    //找出所有文件复制,
     private void findAllSubFile(List<FileInfo> copyFileList, FileInfo fileInfo, String sourceUserId,
                                 String currentUserId, Date curDate, String newFilePid) {
         // 将文件添加进集合
@@ -370,45 +377,12 @@ public class FileInfoServiceImpl implements FileInfoService {
             sourceFileList.forEach(item -> findAllSubFile(copyFileList, item, sourceUserId, currentUserId, curDate, newFileId));
         }
     }
-//
-//    /**
-//     * 前端传参： String shareId, String filePid
-//     * shareId -> shareSessionDto
-//     * @param rootFilePid shareSessionDto.getFileId()
-//     * @param userId shareSessionDto.getShareUserId()
-//     * @param fileId filePid
-//     */
-//    @Override
-//    public void checkRootFilePid(String rootFilePid, String userId, String fileId) {
-//        if (StringTools.isEmpty(fileId)) {
-//            throw new BusinessException(ResponseCodeEnum.CODE_600);
-//        }
-//        if (rootFilePid.equals(fileId)) {
-//            return;
-//        }
-//        checkFilePid(rootFilePid, fileId, userId);
-//    }
-
-//    private void checkFilePid(String rootFilePid, String fileId, String userId) {
-//        FileInfo fileInfo = this.fileInfoMapper.selectByFileIdAndUserId(fileId, userId);
-//        if (fileInfo == null) {
-//            throw new BusinessException(ResponseCodeEnum.CODE_600);
-//        }
-//        if (Constants.ZERO_STR.equals(fileInfo.getFilePid())) {
-//            throw new BusinessException(ResponseCodeEnum.CODE_600);
-//        }
-//        if (fileInfo.getFilePid().equals(rootFilePid)) {
-//            return;
-//        }
-//        checkFilePid(rootFilePid, fileInfo.getFilePid(), userId);
-//    }
-
     // 递归查找文件夹下的所有文件
     private void findAllSubFolderFileIdList(List<String> fileIdList, String userId, String fileId, Integer delFlag) {
         // 首先将自己添加进删除集合
         fileIdList.add(fileId);
 
-        // 然后查找自己下面的所有的文件夹
+        // 然后查找当前文件夹下面的所有的子文件夹
         FileInfoQuery query = new FileInfoQuery();
         query.setUserId(userId);
         query.setFilePid(fileId);
@@ -421,6 +395,13 @@ public class FileInfoServiceImpl implements FileInfoService {
         }
     }
 
+    /**
+     * 数据库层面未保证filename唯一，在这里先检查一次，查filepid与filename
+     * @param filePid
+     * @param userId
+     * @param fileName
+     * @param folderType
+     */
     private void checkFileName(String filePid, String userId,
                                String fileName, Integer folderType) {
         FileInfoQuery fileInfoQuery = new FileInfoQuery();
@@ -463,7 +444,7 @@ public class FileInfoServiceImpl implements FileInfoService {
      */
     @Override
     public PaginationResultVO<FileInfo> findListByPage(FileInfoQuery param) {
-        // 记录条数
+        // 记录所有条数
         int count = fileInfoMapper.selectCount(param);
         // 如果未选择页面大小则使用默认的15
         int pageSize = param.getPageSize() == null ? PageSize.SIZE15.getSize() : param.getPageSize();
@@ -489,9 +470,10 @@ public class FileInfoServiceImpl implements FileInfoService {
      * @param file       传的文件
      * @param fileName   文件名
      * @param filePid    在哪一个目录
-     * @param fileMd5    前端做的
+     * @param fileMd5    前端
      * @param chunkIndex 第几个分片
      * @param chunks     总共有多少个分片
+     * @return UploadResultDto 返给前端
      */
     @Override
     @Transactional
@@ -519,12 +501,12 @@ public class FileInfoServiceImpl implements FileInfoService {
                 fileInfoQuery.setFileMd5(fileMd5);
                 // 只取第一条
                 fileInfoQuery.setSimplePage(new SimplePage(0, 1));
-                // 转码成功，使用中
+                // 设置文件为使用中
                 fileInfoQuery.setStatus(FileStatusEnums.USING.getStatus());
                 // 查询
                 List<FileInfo> dbFileList = fileInfoMapper.selectList(fileInfoQuery);
                 if (!dbFileList.isEmpty()) {
-                    // 数据库中找到，可秒传
+                    // 数据库中找到，可秒传，filepath就已经存到dbFile
                     FileInfo dbFile = dbFileList.get(0);
                     // 判断文件大小
                     if (dbFile.getFileSize() + userSpaceDto.getUseSpace() > userSpaceDto.getTotalSpace()) {
@@ -561,12 +543,12 @@ public class FileInfoServiceImpl implements FileInfoService {
                 throw new BusinessException(ResponseCodeEnum.CODE_904);
             }
 
-            // 暂存临时目录 e:/webser/web_app/easypan/temp/
+            // 暂存临时目录 easypan/temp/
             String tempFolderName = appConfig.getProjectFolder() + Constants.FILE_FOLDER_TEMP;
             // userId + fileId
             String currentUserFolderName = webUserDto.getUserId() + fileId;
 
-            // e:/webser/web_app/easypan/temp/{userId}/{fileId}
+            // easypan/temp/{userId}/{fileId}  不存在->创建
             tempFileFolder = new File(tempFolderName + "/" + currentUserFolderName);
             if (!tempFileFolder.exists()) {
                 tempFileFolder.mkdirs();
@@ -590,7 +572,7 @@ public class FileInfoServiceImpl implements FileInfoService {
             // 根据后缀从枚举类中获取文件类别
             FileTypeEnums fileTypeEnums = FileTypeEnums.getFileTypeBySuffix(fileSuffix);
 
-            //自动重命名
+            //自动重命名防止数据库重名 然后写入数据库
             fileName = autoRename(filePid, userId, fileName);
             FileInfo fileInfo = new FileInfo();
             fileInfo.setFileId(fileId);
@@ -655,7 +637,7 @@ public class FileInfoServiceImpl implements FileInfoService {
             if (fileInfo == null || !FileStatusEnums.TRANSFER.getStatus().equals(fileInfo.getStatus())) {
                 return;
             }
-            //临时目录
+            //临时源目录
             String tempFolderName = appConfig.getProjectFolder() + Constants.FILE_FOLDER_TEMP;
             String currentUserFolderName = webUserDto.getUserId() + fileId;
             File fileFolder = new File(tempFolderName + "/" + currentUserFolderName);
@@ -665,15 +647,15 @@ public class FileInfoServiceImpl implements FileInfoService {
             //文件后缀
             String fileSuffix = StringTools.getFileSuffix(fileInfo.getFileName());
             String month = DateUtil.format(fileInfo.getCreateTime(), DateTimePatternEnum.YYYYMM.getPattern());
-            //目标目录 e:/webser/web_app/easypan + /file + /{month}
+            //目标目录 easypan + /file + /{month}
             String targetFolderName = appConfig.getProjectFolder() + Constants.FILE_FOLDER_FILE;
             File targetFolder = new File(targetFolderName + "/" + month);
             if (!targetFolder.exists()) {
                 targetFolder.mkdirs();
             }
-            //真实文件名 {userId+fileId}
+            //目标文件名 {userId+fileId}
             String realFileName = currentUserFolderName + fileSuffix;
-            //真实文件路径
+            //目标文件路径
             targetFilePath = targetFolder.getPath() + "/" + realFileName;
             //合并文件
             /**
@@ -709,6 +691,7 @@ public class FileInfoServiceImpl implements FileInfoService {
             updateInfo.setFileSize(new File(targetFilePath).length());
             updateInfo.setFileCover(cover);
             updateInfo.setStatus(transferSuccess ? FileStatusEnums.USING.getStatus() : FileStatusEnums.TRANSFER_FAIL.getStatus());
+            //用转码中来查询，查到之后用成功失败更新
             fileInfoMapper.updateFileStatusWithOldStatus(fileId, webUserDto.getUserId(), updateInfo, FileStatusEnums.TRANSFER.getStatus());
         }
     }
@@ -720,7 +703,7 @@ public class FileInfoServiceImpl implements FileInfoService {
         if (!dir.exists()) {
             throw new BusinessException("目录不存在");
         }
-        // 取出temp目录下的所有文件
+        // 取出temp/userid fileid目录下的所有文件
         File[] fileList = dir.listFiles();
         File targetFile = new File(toFilePath);
         // RandomAccessFile支持"随机访问"的方式，程序可以直接跳转到文件的任意地方来读写数据。
@@ -759,7 +742,7 @@ public class FileInfoServiceImpl implements FileInfoService {
             } catch (IOException e) {
                 log.error("关闭流失败", e);
             }
-            if (delSource) {
+            if (delSource) {//要删除源文件
                 if (dir.exists()) {
                     try {
                         // 以递归方式删除目录。

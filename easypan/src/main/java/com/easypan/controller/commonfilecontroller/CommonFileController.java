@@ -39,7 +39,7 @@ public class CommonFileController extends BaseController {
     private RedisComponent redisComponent;
 
 
-    // 获取缩略图
+    // 获取缩略图 写入response
     public void getImage(HttpServletResponse response, String imageFolder, String imageName) {
         if (StringTools.isEmpty(imageFolder) || StringUtils.isBlank(imageName)) {
             return;
@@ -60,7 +60,7 @@ public class CommonFileController extends BaseController {
     protected void getFile(HttpServletResponse response, String fileId, String userId) {
         String filePath = null;
         if (fileId.endsWith(".ts")) {
-            // 如果是后去ts分片文件
+            // 如果是ts分片文件,fileid有 _index 后缀
             String[] tsAarray = fileId.split("_");
             String realFileId = tsAarray[0];
             FileInfo fileInfo = fileInfoService.getFileInfoByFileIdAndUserId(realFileId, userId);
@@ -71,12 +71,12 @@ public class CommonFileController extends BaseController {
             fileName = StringTools.getFileNameNoSuffix(fileName) + "/" + fileId;
             filePath = appConfig.getProjectFolder() + Constants.FILE_FOLDER_FILE + "/" + fileName;
         } else {
-            // 第一次获取.m3u8索引文件
+            // 不是以.ts结尾
             FileInfo fileInfo = fileInfoService.getFileInfoByFileIdAndUserId(fileId, userId);
             if (fileInfo == null) {
                 return;
             }
-            //视频文件读取.m3u8文件
+            //如果是视频文件->读取.m3u8文件
             if (FileCategoryEnums.VIDEO.getCategory().equals(fileInfo.getFileCategory())) {
                 //重新设置文件路径
                 String fileNameNoSuffix = StringTools.getFileNameNoSuffix(fileInfo.getFilePath());
@@ -107,7 +107,7 @@ public class CommonFileController extends BaseController {
          * eg:
          * StringUtils.join(["a", "b", "c"], "--")  = "a--b--c"
          */
-        // order by field("fileId1", "fileId2" ....)
+        // order by field("fileId1", "fileId2" ....)->与数据库查询集合一致
         String orderBy = "field(file_id,\"" + StringUtils.join(pathArray, "\",\"") + "\")";
         infoQuery.setOrderBy(orderBy);
         List<FileInfo> fileInfoList = fileInfoService.findListByParam(infoQuery);

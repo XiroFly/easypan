@@ -2,8 +2,6 @@ package com.easypan.controller;
 
 import com.easypan.annotation.GlobalInterceptor;
 import com.easypan.annotation.VerifyParam;
-import com.easypan.entity.dto.SessionWebUserDto;
-import com.easypan.utils.RedisComponent;
 import com.easypan.controller.commonfilecontroller.CommonFileController;
 import com.easypan.entity.dto.SysSettingsDto;
 import com.easypan.entity.query.FileInfoQuery;
@@ -13,6 +11,7 @@ import com.easypan.entity.vo.ResponseVO;
 import com.easypan.entity.vo.UserInfoVO;
 import com.easypan.service.FileInfoService;
 import com.easypan.service.UserInfoService;
+import com.easypan.utils.RedisComponent;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping("/admin")

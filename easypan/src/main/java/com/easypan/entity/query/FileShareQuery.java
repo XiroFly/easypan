@@ -61,7 +61,9 @@ public class FileShareQuery extends BaseParam {
      * 浏览次数
      */
     private Integer showCount;
-
+    /**
+     * 是否要查询文件名
+     */
     private Boolean queryFileName;
 
     public Boolean getQueryFileName() {

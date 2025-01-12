@@ -69,8 +69,8 @@ public class WebShareController extends CommonFileController {
     public ResponseVO getShareInfo(@VerifyParam(required = true) String shareId) {
         return getSuccessResponseVO(getShareInfoCommon(shareId));
     }
-
-    private ShareInfoVO getShareInfoCommon(String shareId) {
+    //share->ShareInfoVO <- judge(fileInfo)
+        private ShareInfoVO getShareInfoCommon(String shareId) {
         // 根据shareId获得FileShare
         FileShare share = fileShareService.getFileShareByShareId(shareId);
         // 如果FileShare为空或者已经过期
@@ -86,7 +86,6 @@ public class WebShareController extends CommonFileController {
         shareInfoVO.setFileName(fileInfo.getFileName());
         UserInfo userInfo = userInfoService.getUserInfoByUserId(share.getUserId());
         shareInfoVO.setNickName(userInfo.getNickName());
-        shareInfoVO.setAvatar(userInfo.getQqAvatar());
         shareInfoVO.setUserId(userInfo.getUserId());
         return shareInfoVO;
     }
@@ -99,7 +98,7 @@ public class WebShareController extends CommonFileController {
     public ResponseVO checkShareCode(HttpSession session,
                                      @VerifyParam(required = true) String shareId,
                                      @VerifyParam(required = true) String code) {
-        SessionShareDto shareSessionDto = fileShareService.checkShareCode(shareId, code);
+            SessionShareDto shareSessionDto = fileShareService.checkShareCode(shareId, code);
         session.setAttribute(Constants.SESSION_SHARE_KEY + shareId, shareSessionDto);
         return getSuccessResponseVO(null);
     }
@@ -115,7 +114,7 @@ public class WebShareController extends CommonFileController {
 
         // 如果父目录不是根目录
         if (!StringTools.isEmpty(filePid) && !Constants.ZERO_STR.equals(filePid)) {
-//            fileInfoService.checkRootFilePid(shareSessionDto.getFileId(), shareSessionDto.getShareUserId(), filePid);
+//           fileInfoService.checkRootFilePid(shareSessionDto.getFileId(), shareSessionDto.getShareUserId(), filePid);
             query.setFilePid(filePid);
         } else {
             // 如果是根目录
@@ -184,7 +183,7 @@ public class WebShareController extends CommonFileController {
     }
 
     @RequestMapping("/saveShare")
-    @GlobalInterceptor(checkParams = true)
+    @GlobalInterceptor(checkParams = true,checkLogin = true)
     public ResponseVO saveShare(HttpSession session,
                                 @VerifyParam(required = true) String shareId,
                                 @VerifyParam(required = true) String shareFileIds,

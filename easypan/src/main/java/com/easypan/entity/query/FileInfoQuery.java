@@ -114,14 +114,18 @@ public class FileInfoQuery extends BaseParam {
      * 删除标记 0:删除  1:回收站  2:正常
      */
     private Integer delFlag;
+    /**
+     * 数组查
+     */
 
     private String[] fileIdArray;
 
     private String[] filePidArray;
 
     private String[] excludeFileIdArray;
-
+//是否查过期的
     private Boolean queryExpire;
+    //是否查用户昵称
 
     private Boolean queryNickName;
 
